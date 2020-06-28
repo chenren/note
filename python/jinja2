@@ -1,0 +1,7 @@
+1. jinja2中临时变量的作用域很特殊，如果需要在模版中使用flag、count等，可以使用list代替。   
+```
+{% set count = [] %}
+{% for viewId in viewList %}
+	{% set temp = count.append(viewId) %}
+{% endfor %}
+```

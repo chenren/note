@@ -1,0 +1,205 @@
+```
+
+#! /usr/bin/python
+#coding:utf-8
+
+from openpyxl import Workbook
+from openpyxl import load_workbook
+from openpyxl import Image
+from openpyxl.styles import PatternFill, Border, Side, Alignment, Protection, Font
+from openpyxl.styles import colors, Color, NamedStyle
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import quote_sheetname
+from copy import copy
+
+
+
+###工作薄相关
+
+#新建工作薄
+wb = Workbook()
+
+#按名称打开工作薄,只读、只写模式适用于文件很大，无法加载进内存的情况
+wb = load_workbook("workbook.xlsx")
+wb = load_workbook("workbook.xlsx", read_only = True)
+wb = Workbook(write_only=True)
+
+#保存文件
+wb.save("workbook.xlsx")
+
+
+
+###sheet相关
+
+#打开第一个sheet(默认)
+ws = wb.active
+
+#按名称打开sheet
+ws = wb["sheet_name"]
+
+#按索引打开sheet
+ws = wb[wb.sheetnames[1]]
+
+#创建sheet,插入到position位置，默认为最后
+ws = wb.create_sheet("sheet_name", position)
+
+#复制已经存在的sheet
+ws1 = wb.copy_worksheet(ws)
+
+#改变sheet属性
+ws.title = "new title"
+ws.sheet_properties.tabColor = "66CCFF"
+
+#最大行、列
+ws.max_row
+ws.max_column
+
+
+
+###cell相关
+#获取cell对象,注意row, column从1开始计数
+c = ws["A1"]
+c = ws.cell(row = 1, column = 2)
+c_list = ws["A1" : "F7"]
+
+col = ws["A"]
+cols = ws["A" : "F"]
+all_cols = ws.rows()
+
+row = ws[10]
+rows = ws[10 : 12]
+all_rows = ws.columns()
+
+#插入数据
+c.value = "hello world"
+c.value = datetime.datetime(2018, 6, 29)
+
+#插入公式
+c.value = "=SUM(1, 1)"
+
+#插入图片
+img = Image(filePath)
+ws.add_image(img, "A1")
+
+#插入超链接
+c.hyperlink = "workbookEx.xlsx#'sheet_name'!A1"
+
+#开启类型推断,自动判断数据类型
+wb.guess_types = False
+
+#超链接
+ws.cell(row=1, column=1).hyperlink = "workbookEx.xlsx#sheet_name!E5"
+
+
+###style相关
+
+#合并单元格
+ws.merge_cells('A2:D2')
+ws.unmerge_cells('A2:D2')
+
+ws.merge_cells(start_row=2, start_column=1, end_row=4, end_column=4)
+ws.unmerge_cells(start_row=2, start_column=1, end_row=4, end_column=4)
+
+#折叠列
+ws.column_dimensions.group('A','D', hidden=True)
+
+#各种格式的默认属性
+font = Font(name='Calibri',
+                size=11,
+                bold=False,
+                italic=False,
+                vertAlign=None,
+                underline='none',
+                strike=False,
+                color='FF000000')
+fill = PatternFill(fill_type=None,
+                start_color='FFFFFFFF',
+                end_color='FF000000')
+border = Border(left=Side(border_style=None,
+                          color='FF000000'),
+                right=Side(border_style=None,
+                           color='FF000000'),
+                top=Side(border_style=None,
+                         color='FF000000'),
+                bottom=Side(border_style=None,
+                            color='FF000000'),
+                diagonal=Side(border_style=None,
+                              color='FF000000'),
+                diagonal_direction=0,
+                outline=Side(border_style=None,
+                             color='FF000000'),
+                vertical=Side(border_style=None,
+                              color='FF000000'),
+                horizontal=Side(border_style=None,
+                               color='FF000000')
+               )
+alignment=Alignment(horizontal='general',
+                    vertical='bottom',
+                    text_rotation=0,
+                    wrap_text=False,
+                    shrink_to_fit=False,
+                    indent=0)
+number_format = 'General'
+protection = Protection(locked=True,
+                        hidden=False)
+
+#应用格式
+c = ws["A1"]
+c.font = Font(color = colors.RED)
+
+row = ws.row_dimensions[1]
+row.font = Font(color = colors.RED)
+
+col = ws.column_dimensions["A"]
+col.font = Font(color = colors.RED)
+
+#复制单元格格式
+ft = copy(c.font)
+
+#命名格式可以组合多种格式，可以应用全sheet
+highlight = NamedStyle(name="highlight")
+highlight.font = Font(bold=True, size=20)
+bd = Side(style='thick', color="000000")
+highlight.border = Border(left=bd, top=bd, right=bd, bottom=bd)
+wb.add_named_style(highlight)
+
+###其他
+
+#从不同的excel文件copy sheet页
+def copySheet(srcBook, tarBook, srcSheetName, tarSheetName):
+    srcSheet = srcBook[srcSheetName]
+    tarSheet = tarBook.create_sheet(tarSheetName)
+    for row in range(1, srcSheet.max_row + 1):
+        # 设置行高
+        tarSheet.row_dimensions[row].height = srcSheet.row_dimensions[row].height
+        for col in range(1, srcSheet.max_column + 1):
+            # 设置列宽，注意列index为字母，需要用get_column_letter转换函数
+            tarSheet.column_dimensions[get_column_letter(col)].width = srcSheet.column_dimensions[get_column_letter(col)].width
+            tarCell = tarSheet.cell(row, col)
+            srcCell = srcSheet.cell(row, col)
+            tarCell.value = srcCell.value
+
+            # 复制单元格格式
+            if srcCell.has_style:
+                tarCell.font = copy(srcCell.font)
+                tarCell.border = copy(srcCell.border)
+                tarCell.fill = copy(srcCell.fill)
+                tarCell.number_format = copy(srcCell.number_format)
+                tarCell.protection = copy(srcCell.protection)
+                tarCell.alignment = copy(srcCell.alignment)
+    # 处理合并的单元格
+    for mc in srcSheet.merged_cells:
+        tarSheet.merge_cells(mc.coord)
+
+
+#从其他sheet选择下拉数据
+dv = DataValidation(type="list", formula1="{0}!$B$1:$B$10".format(quote_sheetname('DropDownData')))
+ws.add_data_validation(dv)
+dv.add('C4:C33')
+
+
+
+
+```
