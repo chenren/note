@@ -1,5 +1,3 @@
-[TOC]
-
 # 性能分析方法
 ## 装饰器
 装饰器是一种设计模式，可以在不修改目标函数代码的前提下, 在目标函数执行前后增加一些额外功能，可以使用装饰器对目标函数计数。  
@@ -108,7 +106,7 @@ if __name__ == '__main__':
     lp.print_stats()				# 输出信息
 ```
 
-# 迭代器与生成器
+## 迭代器与生成器
 参考：	[Python中“生成器”、“迭代器”、“闭包”、“装饰器”的深入理解](https://www.cnblogs.com/tianyiliang/p/7811041.html)  
 Python中任意的对象，只要它定义了可以返回一个迭代器的__iter__方法，或者定义了可以支持下标索引的__getitem__方法，那么它就是一个可迭代对象。简单说，可迭代对象就是能提供迭代器的任意对象。那迭代器又是什么呢？任意对象，只要定义了next(Python2) 或者__next__方法，它就是一个迭代器。
 生成器是一边循环一边计算，产生新值的机制。与列表相比，生成器可以节约内存，但只能使用一次。
@@ -119,17 +117,96 @@ Python中任意的对象，只要它定义了可以返回一个迭代器的__ite
 使用*yield*返回结果，通过调用next()方法获取下一个值，send()方法可以向生成器中传入数据。  
 
 
-# 协程
-参考: [协程](https://blog.csdn.net/qq_42156420/article/details/81138062)  
-协程是一种用户态轻量级线程，拥有自己的寄存器上下文和栈，可以实现异步操作。协程本质是单进程，不需要考虑进程同步问题。
-协程主要应用在IO密集型任务，尤其是网络相关的情况，将等待IO的时间利用起来。协程的简单使用：  
+## 协程
+参考: [协程](https://blog.csdn.net/weixin_41599977/article/details/93656042)  
+协程是一种用户态轻量级线程，拥有自己的寄存器上下文和栈，可以实现异步操作。  
+协程与线程的差异：线程是由操作系统控制进行调度和切换的，线程进行切换时除了cpu上下文，还有cache等数据需要进行切换。
+协程是由应用程序自己控制进行切换，只需要切换cpu上下文。  
+我的理解是协程是在线程的某个函数中能自由的切换到其他的函数，并且能保存原来的信息的机制。
+协程主要应用在IO密集型任务，尤其是网络相关的情况，将等待IO的时间利用起来。  
+协程的实现：  
+1. 使用yield(生成器)实现协程。yield返回值后，能保存生成器原来的状态，通过send()方法向生成器中传递数据，同时唤醒生成器，实现手动切换函数。
+```
+def generate():
+    i = 0
+    while i < 5:
+        print("我在这。。")
+        xx = yield i  # 注意，python程序，碰到=，都是先从右往左执行
+        print(xx)
+        i += 1
+
+if __name__ == '__main__':
+    g = generate()
+    g.send(None)  # <==> next(g) 第一次启动，执行到yield i（此时i=0），挂起任务，主程序继续往下执行
+    g.send("lalala")  # 第二次唤醒生成器，从上次的yield i 处继续执行，即往左执行，把lalala赋值给xx后，往下执行，直到下次的yield i（此时i=1），挂起任务
+    next(g)     # 第三次唤醒生成器，相当于g.send(None)
+
+'''
+运行结果：
+我在这。。
+lalala
+我在这。。
+None
+我在这。。
+'''
+```
+2. 使用greenlet实现协程，以函数创建greenlet，通过switch()接口手动进行函数切换。
+```
+from greenlet import greenlet
+def test1():
+    print 12
+    gr2.switch()
+    print 34
+
+def test2():
+    print 56
+    gr1.switch()
+    print 78
+
+gr1 = greenlet(test1)
+gr2 = greenlet(test2)
+gr1.switch()
+
+'''
+运行结果：
+12 56 34
+'''
+```
+
+3. gevent，当一个协程遇到IO等耗时的操作时，自动切换协程运行。  
+gevent提供了事件、信号量、锁、猴子补丁等机制，具体参考[Gevent简明教程](https://www.jianshu.com/p/4dca99ffc0b4)
+```
+import gevent
+
+def task_1(num):
+    for i in range(num):
+        print(gevent.getcurrent(), i)
+        gevent.sleep(1)  # 模拟一个耗时操作，注意不能使用time模块的sleep
+        
+if __name__ == "__main__":
+    g1 = gevent.spawn(task_1, 5)  # 创建协程
+    g2 = gevent.spawn(task_1, 5)
+    g3 = gevent.spawn(task_1, 5)
+    
+    g1.join()  # 等待协程运行完毕
+    g2.join()
+    g3.join()
+```
+
+4. asyncio  
+event_loop 事件循环：相当于一个无限循环，我们可以把一些函数注册到这个事件循环上，当满足条件时，就会调用对应的处理方法。  
+coroutine 协程：协程对象，只一个使用async关键字定义的函数，他的调用不会立即执行函数，而是会返回一个协程对象。协程对象需要注册到事件循环中，由事件循环调用。  
+task 任务：一个协程对象就是一个原生可以挂起的函数，任务则是对协程的进一步封装，其中包含任务的各种状态。  
+future：代表将来执行或没有执行的任务结果。它与task没有本质的区别。  
+async/await 关键字：python3.5用于定义协程的关键字，async定义一个协程，await用于挂起阻塞的异步调用接口。  
+
 ```
 import asyncio
 import requests
 
 async def request():
     url = 'https://stackoverflow.com/'
-    states = await requests.get(url)		# 请求url时await,此处需要后边为coroutine对象
+    states = await requests.get(url)		# 请求url时await,当执行到此处时挂起，切换到其他协程
     print('request end')
     return states
 
@@ -149,7 +226,8 @@ loop.run_until_complete(asyncio.wait(tasks))# 多任务需要使用wait方法
 print('Task: ', task)
 ```
 
-# 进程池
+## 进程
+### 进程池
 参考：[multiprocessing多进程总结](https://www.cnblogs.com/tkqasn/p/5701230.html)  
 在python中需要利用多核性能时需要使用多进程。多线程的简单使用（不考虑数据共享）：  
 ```
@@ -205,3 +283,35 @@ class ImagePacker(objects):
         res = pool.apply_async(func=cropImageWrapper, args=(self, srcFile, tarFile, ))
         print(res.get())
 ```
+### 进程通信
+1. 互斥锁，同一时间只有一个进程能访问共享资源
+2. 信号量，可以有多个进程使用共享资源，但是不能超过设定的量
+3. 队列和管道multiprocessing.Queue和multiprocess.Pipe
+4. 事件通知
+
+## 线程
+线程的简单使用
+```
+import threading
+import time
+
+def run(n):
+    print("task", n)
+    time.sleep(2)
+    pass
+
+if __name__ == '__main__':
+    t1 = threading.Thread(target=run, args=("t1",))
+    t2 = threading.Thread(target=run, args=("t2",))
+    t1.start()
+    t2.start()
+    t1.join()
+    t2.join()
+```
+也可以通过继承threading.Thread来自定义线程类，需要重构Thread类中的run方法
+线程间通信可以使用：互斥锁、信号量、事件通知、queue，python中队列是线程安全的
+
+## 方法论
+1. 明确优化的目标，内存/cpu...
+2. 定位性能瓶颈，使用profile等一系列工具定位最影响性能的代码片段。
+3. 根据具体代码，确定优化方法：算法优化、循环体优化、缓存（运算结果缓存）、并发、lazy（单例/生成器）
