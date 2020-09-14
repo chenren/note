@@ -1,6 +1,7 @@
 # 性能分析方法
 ## 装饰器
 装饰器是一种设计模式，可以在不修改目标函数代码的前提下, 在目标函数执行前后增加一些额外功能，可以使用装饰器对目标函数计数。  
+在python中，装饰器可以理解为返回函数的函数。装饰器的基础用法：  
 ```
 def log(func):
     def wrapper(*args, **kwargs):
@@ -19,6 +20,66 @@ class test:
 运行结果：  
 >test::fun() start  
 test::fun() end, cost 0s
+
+理解装饰器高级用法：  
+```
+# 调用方法
+# @test_warp1
+# def fun(...): ...
+# 调用装饰器相当于 fun = test_warp1(fun)
+def test_warp1(fun):
+    def warp(*args, **kwargs):
+        print('---before fun, do something')
+        fun(*args, **kwargs)
+        print('---after fun, do something')
+
+    return warp
+
+# 调用方法
+# @test_warp2
+# def fun(...): ...
+# 与1类似，只是多了默认参数，相当于 fun = test_warp2(fun),其中默认参数无法传入其他值
+def test_warp2(fun, parm='pppp'):
+    def warp(*args, **kwargs):
+        print(parm)
+        print('---before fun, do something')
+        fun(*args, **kwargs)
+        print('---after fun, do something')
+
+    return warp
+
+# 调用方法
+# @test_warp3(...)
+# def fun(...): ...
+# 调用装饰器相当于 fun = test_warp3(...)(fun),这种写法的装饰器括号一定需要带上
+def test_warp3(*args, **kwargs):
+    def warp2(fun):
+        def warp(*args, **kwargs):
+            # print(parm)
+            print('---before fun, do something')
+            fun(*args, **kwargs)
+            print('---after fun, do something')
+        return warp
+    return warp2
+
+# 调用方法
+# @test_warp3(...)      或者 @test_warp3
+# def fun(...): ...
+# 装饰器后面有括号相当于 fun = test_warp3(...)(fun),装饰器后面无括号相当于 fun = test_warp3(fun)
+# 有无括号的差分必须在装饰器内部进行处理
+def test_warp4(*args1, **kwargs1):
+    def warp2(fun):
+        def warp(*args2, **kwargs2):
+            # print(parm)
+            print('---before fun, do something')
+            fun(*args2, **kwargs2)
+            print('---after fun, do something')
+        return warp
+    if len(args1) == 1 and len(kwargs1) == 0 and callable(args1[0]):
+        return warp2(args1[0])
+    else:
+        return warp2
+```
 
 
 ## time命令

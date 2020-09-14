@@ -1,45 +1,31 @@
-# Python BD-API
-python·ÃÎÊÊı¾İ¿âµÄÍ³Ò»½Ó¿Ú¹æ·¶£¬¶Ô²»Í¬µÄÊı¾İ¿â·â×°ÁËÒ»Ì×Í³Ò»µÄ½Ó¿Ú£¬µ×²ãÊı¾İ¿â±ä»¯Ê±¶ÔÉÏ²ã²Ù×÷Êı¾İ¿âµÄÂß¼­´úÂëÃ»ÓĞÓ°Ïì¡£  
-²Î¿¼£º[DB-APIµÄÊ¹ÓÃÁ÷³Ì](https://blog.csdn.net/weixin_37972723/article/details/80425446)
-### DB-API°²×°ÓëÊ¹ÓÃ
-ÒÔmysqlÎªÀı£¬ĞèÒªµ½Êı¾İ¿â¹ÙÍøÏÂÔØ¶ÔÓÚµÄpython¿â£ºhttps://dev.mysql.com/downloads/connector/python/  
-¼òµ¥Ê¹ÓÃ£º  
+ï»¿# Python BD-API
+pythonè®¿é—®æ•°æ®åº“çš„ç»Ÿä¸€æ¥å£è§„èŒƒï¼Œå¯¹ä¸åŒçš„æ•°æ®åº“å°è£…äº†ä¸€å¥—ç»Ÿä¸€çš„æ¥å£ï¼Œåº•å±‚æ•°æ®åº“å˜åŒ–æ—¶å¯¹ä¸Šå±‚æ“ä½œæ•°æ®åº“çš„é€»è¾‘ä»£ç æ²¡æœ‰å½±å“ã€‚  
+å‚è€ƒï¼š[DB-APIçš„ä½¿ç”¨æµç¨‹](https://blog.csdn.net/weixin_37972723/article/details/80425446)
+### DB-APIå®‰è£…ä¸ä½¿ç”¨
+ä»¥mysqlä¸ºä¾‹ï¼Œéœ€è¦åˆ°æ•°æ®åº“å®˜ç½‘ä¸‹è½½å¯¹äºçš„pythonåº“ï¼šhttps://dev.mysql.com/downloads/connector/python/  
+ç®€å•ä½¿ç”¨ï¼š  
 ```
 import mysql.connector
 
-if __name__ == '__main__':
     dbconfig = {'host': 'localhost',
                 'user': 'chenren',
                 'password': '1234',
                 'database': 'MYSQL80'}
 
-    conn = mysql.connector.connect(**dbconfig)  # Á¬½ÓÊı¾İ¿â
-    cursor = conn.cursor()  # »ñÈ¡ÓÎ±ê
+    conn = mysql.connector.connect(**dbconfig)  # è¿æ¥æ•°æ®åº“
+    cursor = conn.cursor()  # è·å–æ¸¸æ ‡
 
     sql = 'select * from log'
-    cursor.execute(sql)     # Ö´ĞĞÊı¾İ¿â²Ù×÷
+    cursor.execute(sql)     # æ‰§è¡Œæ•°æ®åº“æ“ä½œ
 
-    cursor.fetchone()       # »ñÈ¡Ö´ĞĞ½á¹û£¬Ò»ĞĞ
-    cursor.fetchmany(3)     # »ñÈ¡Ö´ĞĞ½á¹û£¬¶àĞĞ
-    data = cursor.fetchall()    # »ñÈ¡ÓàÏÂÈ«²¿Ö´ĞĞ½á¹û
+    cursor.fetchone()       # è·å–æ‰§è¡Œç»“æœï¼Œä¸€è¡Œ
+    cursor.fetchmany(3)     # è·å–æ‰§è¡Œç»“æœï¼Œå¤šè¡Œ
+    data = cursor.fetchall()    # è·å–ä½™ä¸‹å…¨éƒ¨æ‰§è¡Œç»“æœ
     for row in data:
         print(row)
 
-    conn.commit()     #Èç¹ûÓĞĞèÒª£¬Ìá½»ÊÂÎñ
+    conn.commit()     #å¦‚æœæœ‰éœ€è¦ï¼Œæäº¤äº‹åŠ¡
 
     cursor.close()
     conn.close()
 ```
-### MySql ÃüÁî 
-ÃüÁî | ËµÃ÷ 
-:-: | :-:  
-systemctl status mysql.service | ²é¿´sql·şÎñ×´Ì¬  
-sudo mysql -uroot -p | µÇÂ¼  
-show databases; | ²é¿´Êı¾İ¿â  
-create/drop database dbname; | ´´½¨/É¾³ıÊı¾İ¿âdbname  
-use dbname£»| ½øÈëÊı¾İ¿âdbname  
-create table tabname(id int not null,name varchar(45),PRIMARY KEY(id)); | ´´½¨±í  
-drop table tabname; | É¾³ı±í  
-desc tabname; | ÏÔÊ¾±í  
-aler table tabname add column name varchar(4); | ÔÚ±íÖĞ²åÈëÁĞ  
-  

@@ -193,6 +193,7 @@ if __name__ == '__main__':
 
 ```
 
+
 16. python打包成app(Mac)
 a. 安装py2app库
 b. 执行： py2applet --make-setup xxx.py
@@ -202,3 +203,57 @@ OPTIONS中可以传入需要引用的第三方库例如：OPTIONS = {'includes':
 d. 执行： python3 setup.py py2app [-A]
 其中[-A]为可选参数，不选择代表需要将第三方库打包进app
 生成的app中，可以通过终端运行 ./xxx.app/Contents/MacOS/xxx，达到与运行python类似的效果，可以传递参数
+
+17. dir()与__dict__
+dir()列出类或对象的所有属性/方法的名称，包括父类的属性/方法，以类为参数时不会列出对象属性。  
+__dict__列出类或对象的部分属性/方法名称以及对应的值（字典形式），不包括父类。以对象为参数时，只会列出对象属性。  
+```
+class A:
+    cls_pro = 'cls'
+
+    @staticmethod
+    def static_fun():
+        pass
+
+    @classmethod
+    def class_fun(cls):
+        pass
+
+    def __init__(self):
+        self.a = 'aaa'
+
+    def fun(self):
+        pass
+
+
+class B(A):
+    def __init__(self):
+        self.b = 'bbb'
+
+    def fun_b(self):
+        pass
+
+
+if __name__ == '__main__':
+    a = A()
+    b = B()
+    print('dir(A)={}'.format(dir(A)))
+    print('dir(a)={}'.format(dir(a)))
+    print('A.__dict__={}'.format(A.__dict__))
+    print('a.__dict__={}'.format(a.__dict__))
+
+    print('dir(B)={}'.format(dir(B)))
+    print('dir(b)={}'.format(dir(b)))
+    print('B.__dict__={}'.format(B.__dict__))
+    print('b.__dict__={}'.format(b.__dict__))
+
+# 输出
+dir(A)=['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'class_fun', 'cls_pro', 'fun', 'static_fun']
+dir(a)=['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'a', 'class_fun', 'cls_pro', 'fun', 'static_fun']
+A.__dict__={'__module__': '__main__', 'cls_pro': 'cls', 'static_fun': <staticmethod object at 0x000001635AF5F710>, 'class_fun': <classmethod object at 0x000001635AF369B0>, '__init__': <function A.__init__ at 0x000001635AFC6510>, 'fun': <function A.fun at 0x000001635AFC6598>, '__dict__': <attribute '__dict__' of 'A' objects>, '__weakref__': <attribute '__weakref__' of 'A' objects>, '__doc__': None}
+a.__dict__={'a': 'aaa'}
+dir(B)=['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'class_fun', 'cls_pro', 'fun', 'fun_b', 'static_fun']
+dir(b)=['__class__', '__delattr__', '__dict__', '__dir__', '__doc__', '__eq__', '__format__', '__ge__', '__getattribute__', '__gt__', '__hash__', '__init__', '__init_subclass__', '__le__', '__lt__', '__module__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', '__subclasshook__', '__weakref__', 'b', 'class_fun', 'cls_pro', 'fun', 'fun_b', 'static_fun']
+B.__dict__={'__module__': '__main__', '__init__': <function B.__init__ at 0x000001635AFC6620>, 'fun_b': <function B.fun_b at 0x000001635AFC66A8>, '__doc__': None}
+b.__dict__={'b': 'bbb'}
+```
